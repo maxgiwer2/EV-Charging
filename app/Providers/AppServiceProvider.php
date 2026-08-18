@@ -6,6 +6,7 @@ namespace App\Providers;
 
 use App\Contracts\AiProviderInterface;
 use App\Contracts\OcrProviderInterface;
+use App\Models\Budget;
 use App\Models\ChargingConnector;
 use App\Models\ChargingNetwork;
 use App\Models\ChargingSession;
@@ -13,6 +14,7 @@ use App\Models\ChargingStation;
 use App\Models\ChargingTariff;
 use App\Models\Receipt;
 use App\Models\Vehicle;
+use App\Policies\BudgetPolicy;
 use App\Policies\ChargingConnectorPolicy;
 use App\Policies\ChargingNetworkPolicy;
 use App\Policies\ChargingSessionPolicy;
@@ -101,6 +103,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ChargingStation::class, ChargingStationPolicy::class);
         Gate::policy(ChargingConnector::class, ChargingConnectorPolicy::class);
         Gate::policy(Receipt::class, ReceiptPolicy::class);
+        Gate::policy(Budget::class, BudgetPolicy::class);
         Gate::policy(ChargingTariff::class, ChargingTariffPolicy::class);
     }
 }

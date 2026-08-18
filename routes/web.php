@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\BudgetController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\QuickEntryController;
 use App\Http\Controllers\Web\ReceiptReviewController;
@@ -41,6 +42,15 @@ Route::middleware('auth')->group(function (): void {
     // Quick entry (docs/04): the path a driver uses at the charger.
     Route::get('quick-add', [QuickEntryController::class, 'create'])->name('sessions.quick-entry');
     Route::post('quick-add', [QuickEntryController::class, 'store'])->name('sessions.quick-entry.store');
+
+    // Budgets (docs/02 FR-013). Names are namespaced because the API
+    // resource already registers budgets.*.
+    Route::get('budgets', [BudgetController::class, 'index'])->name('budgets.manage.index');
+    Route::get('budgets/create', [BudgetController::class, 'create'])->name('budgets.manage.create');
+    Route::post('budgets', [BudgetController::class, 'store'])->name('budgets.manage.store');
+    Route::get('budgets/{budget}/edit', [BudgetController::class, 'edit'])->name('budgets.manage.edit');
+    Route::put('budgets/{budget}', [BudgetController::class, 'update'])->name('budgets.manage.update');
+    Route::delete('budgets/{budget}', [BudgetController::class, 'destroy'])->name('budgets.manage.destroy');
 
     // Vehicles (docs/02 FR-002).
     Route::get('vehicles', [VehicleController::class, 'index'])->name('vehicles.manage.index');

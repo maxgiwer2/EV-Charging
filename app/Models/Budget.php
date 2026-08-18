@@ -10,9 +10,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * @property array<int, int|string>|null $alert_thresholds
+ * @property string $amount
+ * @property Carbon $period_start
+ * @property Carbon $period_end
  * @property BudgetPeriod $period
  */
 class Budget extends Model

@@ -63,6 +63,98 @@
         <x-stat label="km / kWh" :value="$summary['km_per_kwh']" />
     </div>
 
+    {{-- Budget, projection and anything unusual: the things worth acting on,
+         placed above the charts. --}}
+    {{-- Always rendered: when a projection is not yet possible the card says
+         why, which both explains the gap and tells a new user the feature
+         exists. Hiding it would leave them wondering. --}}
+    <div class="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            @foreach ($budgets as $budget)
+                @php
+                    $used = (float) ($budget['percentage_used'] ?? 0);
+                    $bar = $budget['is_over_budget'] ? 'bg-rose-600'
+                        : ($used >= 80 ? 'bg-amber-500' : 'bg-emerald-600');
+                @endphp
+                <div class="rounded-md border border-slate-200 bg-white p-4">
+                    <div class="flex items-baseline justify-between">
+                        <p class="text-xs uppercase tracking-wide text-slate-500">Budget</p>
+                        <p class="text-xs text-slate-400">
+                            {{ \Illuminate\Support\Carbon::parse($budget['period_start'])->format('d M') }}
+                            &ndash;
+                            {{ \Illuminate\Support\Carbon::parse($budget['period_end'])->format('d M') }}
+                        </p>
+                    </div>
+
+                    <p class="mt-1 text-xl font-semibold tabular-nums">
+                        {{ $budget['spent'] }}
+                        <span class="text-sm font-normal text-slate-500">of {{ $budget['amount'] }}</span>
+                    </p>
+
+                    <div class="mt-2 h-2 overflow-hidden rounded bg-slate-100">
+                        {{-- Capped at 100% width so an overspend does not draw
+                             outside the track; the number states the real figure. --}}
+                        <div class="h-2 {{ $bar }}" style="width: {{ min(100, $used) }}%"></div>
+                    </div>
+
+                    <p class="mt-1 text-xs {{ $budget['is_over_budget'] ? 'text-rose-700' : 'text-slate-500' }}">
+                        @if ($budget['is_over_budget'])
+                            {{ ltrim($budget['remaining'], '-') }} over budget
+                        @else
+                            {{ $budget['remaining'] }} left &middot; {{ $budget['percentage_used'] }}% used
+                        @endif
+                    </p>
+                </div>
+            @endforeach
+
+            <div class="rounded-md border border-slate-200 bg-white p-4">
+                <p class="text-xs uppercase tracking-wide text-slate-500">Projected this month</p>
+
+                @if ($forecast['available'])
+                    <p class="mt-1 text-xl font-semibold tabular-nums">{{ $forecast['projected_total'] }}</p>
+                    <p class="mt-1 text-xs text-slate-500">
+                        {{ $forecast['spent_to_date'] }} spent over
+                        {{ $forecast['elapsed_days'] }} of {{ $forecast['total_days'] }} days
+                        @if ($typicalSpend)
+                            &middot; typical month {{ $typicalSpend }}
+                        @endif
+                    </p>
+
+                    {{-- Caveats are shown, not buried: someone comparing this
+                         with a budget should know what it rests on. --}}
+                    @if (! empty($forecast['caveats']))
+                        <p class="mt-1 text-xs text-amber-700">
+                            {{ implode(', ', array_map(fn ($c) => str_replace('_', ' ', $c), $forecast['caveats'])) }}
+                        </p>
+                    @endif
+                @else
+                    {{-- Saying why is more useful than showing a number that
+                         rests on nothing. --}}
+                    <p class="mt-1 text-sm text-slate-400">
+                        Not enough data yet
+                        <span class="block text-xs">({{ str_replace('_', ' ', (string) $forecast['unavailable_reason']) }})</span>
+                    </p>
+                @endif
+            </div>
+
+            @if (! empty($anomalies))
+                <div class="rounded-md border border-amber-200 bg-amber-50 p-4">
+                    <p class="text-xs uppercase tracking-wide text-amber-800">Unusual charges</p>
+                    <ul class="mt-2 space-y-1 text-sm text-amber-900">
+                        @foreach ($anomalies as $anomaly)
+                            @php $a = $anomaly->toArray(); @endphp
+                            <li class="flex justify-between gap-2">
+                                <span>{{ \Illuminate\Support\Carbon::parse($a['started_at'])->timezone(config('app.display_timezone'))->format('d M') }}</span>
+                                <span class="font-medium tabular-nums">{{ $a['total_amount'] }}</span>
+                            </li>
+                        @endforeach
+                    </ul>
+                    <p class="mt-2 text-xs text-amber-700">
+                        Higher than your usual &mdash; worth a look, not necessarily wrong.
+                    </p>
+                </div>
+            @endif
+    </div>
+
     <div class="mb-6 grid gap-6 lg:grid-cols-3">
         {{-- Daily spend. A plain CSS bar chart: no charting library is needed
              for a single series, and it stays readable without JavaScript. --}}

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\V1\AssistantController;
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\BudgetController;
 use App\Http\Controllers\Api\V1\ChargingConnectorController;
 use App\Http\Controllers\Api\V1\ChargingNetworkController;
 use App\Http\Controllers\Api\V1\ChargingSessionController;
@@ -62,6 +63,15 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('dashboard/summary', [DashboardController::class, 'summary'])->name('dashboard.summary');
     Route::get('dashboard/trends', [DashboardController::class, 'trends'])->name('dashboard.trends');
     Route::get('dashboard/breakdowns', [DashboardController::class, 'breakdowns'])->name('dashboard.breakdowns');
+
+    /*
+     * Budgets (docs/02 FR-013) and their threshold alerts (FR-014).
+     *
+     * Spend is measured by AnalyticsService, so a budget always agrees with
+     * the dashboard.
+     */
+    Route::get('budgets/status', [BudgetController::class, 'status'])->name('budgets.status');
+    Route::apiResource('budgets', BudgetController::class);
 
     /*
      * Insights (docs/02 FR-018). Statistical, not AI: they inform decisions

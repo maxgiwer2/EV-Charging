@@ -8,6 +8,9 @@ use App\Http\Controllers\Controller;
 use App\Models\ChargingSession;
 use App\Services\AnalyticsFilter;
 use App\Services\AnalyticsService;
+use App\Services\AnomalyDetectionService;
+use App\Services\BudgetService;
+use App\Services\ForecastService;
 use App\Services\ReportService;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
@@ -23,6 +26,9 @@ class DashboardController extends Controller
     public function __construct(
         private readonly AnalyticsService $analytics,
         private readonly ReportService $reports,
+        private readonly BudgetService $budgets,
+        private readonly ForecastService $forecast,
+        private readonly AnomalyDetectionService $anomalies,
     ) {}
 
     public function index(Request $request): View
@@ -42,6 +48,15 @@ class DashboardController extends Controller
             // screen is for browsing everything.
             'recent' => $this->reports->chargingRows($filter)->take(10)->all(),
             'columns' => ReportService::CHARGING_COLUMNS,
+
+            // Budgets and the projection alert on the way past a threshold, so
+            // evaluating on view is what makes them useful (FR-013/FR-014).
+            'budgets' => $this->budgets->evaluateAndNotify($request->user()),
+            'forecast' => $this->forecast->projectCurrentMonth($request->user())->toArray(),
+            'typicalSpend' => $this->forecast->typicalMonthlySpend($request->user()),
+            // Capped: the dashboard points at the most notable, the insights
+            // list has the rest.
+            'anomalies' => array_slice($this->anomalies->detectAndNotify($request->user()), 0, 3),
         ]);
     }
 }

@@ -368,3 +368,37 @@ cannot be enforced on one path but not the other.
 All three are **advisory** and say so in `meta`. Anomalies and forecasting are
 statistical rather than AI; the assistant never produces a number at all. See
 `docs/13-ai-assistant.md` for the reasoning and the guarantees.
+
+---
+
+## Budgets (FR-013 / FR-014)
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/budgets` | own budgets |
+| POST/PUT/DELETE | `/budgets`, `/budgets/{id}` | own budgets; viewers refused |
+| GET | `/budgets/status` | current standing; `?notify=1` also raises alerts |
+
+Spend is measured by `AnalyticsService` over **confirmed** sessions only, so a
+budget always agrees with the dashboard — one that disagreed would be worse than
+no budget at all.
+
+`remaining` goes **negative** once the budget is passed rather than clamping to
+zero: "how far over" is the useful reading. `percentage_used` is null only if the
+amount were zero, which validation forbids.
+
+### Thresholds
+
+Default 50/80/100, overridable per budget (docs/02 calls them configurable;
+docs/10 rule 9 forbids hard-coding). Each level alerts **once, ever** — a user
+sitting just above 80% must not be told again on every evaluation, because
+alerts people learn to ignore are worse than none.
+
+### Period boundaries
+
+`period_start` / `period_end` are plain dates meaning those days in the user's
+**local** calendar. The window is built by re-parsing the date string in the
+display timezone rather than converting a UTC-midnight value — doing the latter
+shifts the window by the offset and silently drops the last hours of the final
+day, which is precisely when a budget is being watched. Both sides of that
+boundary are covered by tests.

@@ -31,6 +31,9 @@
                 <a href="{{ route('vehicles.manage.index') }}" class="text-slate-600 hover:text-slate-900">
                     Vehicles
                 </a>
+                <a href="{{ route('budgets.manage.index') }}" class="text-slate-600 hover:text-slate-900">
+                    Budgets
+                </a>
                 <a href="{{ route('sessions.quick-entry') }}"
                    class="rounded-md bg-slate-900 px-2.5 py-1 text-white hover:bg-slate-700">
                     + Add

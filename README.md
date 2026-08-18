@@ -56,6 +56,7 @@ Laravel 12 / PHP 8.4 / MySQL 8.4 / Redis 7 / nginx — Blade + Tailwind + Alpine
 | M3 Analytics | ✅ Cost engine, session confirm/cancel, dashboard, reports, CSV/XLSX/PDF export |
 | M4 Tariff | ✅ Versioned tariffs + overlap/immutability, TOU, Typhoon OCR, upload/quick-entry/vehicle UI |
 | M5 AI | ✅ AI assistant (Ollama, advisory), anomaly detection, forecasting |
+| Backlog | ✅ FR-013 budgets + insights UI (dashboard: budget, forecast, anomalies) |
 | M6 Production | ⬜ ถัดไป |
 
 ## หลักสำคัญ

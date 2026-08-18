@@ -80,15 +80,21 @@ real data rather than tuning it blind.
 **Resolved in M4:** `/quick-add`, `/receipts/upload` (with camera capture) and
 `/vehicles` now exist alongside the dashboard and review screens.
 
-### 7. Budgets and notifications are data-only
+### 7. Budgets and notifications are data-only — RESOLVED
 
 `budgets` and `notifications` tables, models and factories exist. FR-013
 thresholds (50/80/100%) and FR-014 alerts have no service behind them.
 Notifications *are* raised for duplicates and review, so the plumbing works.
-**Partly resolved in M5:** FR-014 anomalous-expense alerts now exist
-(`AnomalyDetectionService::detectAndNotify`). **Budget thresholds (FR-013)
-remain** — the spend figures they need are available from `AnalyticsService`,
-so this is a small addition for M6.
+**Resolved:** FR-014 alerts exist for anomalous expenses
+(`AnomalyDetectionService::detectAndNotify`), duplicate receipts and OCR
+review; FR-013 budgets are implemented in `BudgetService` with per-budget
+thresholds, an API, management screens and dashboard cards.
+
+A timezone bug surfaced while building it and is worth remembering: the budget
+window was built by converting a UTC-midnight date to local time, which shifted
+it by the offset and dropped the last hours of the final day — the moment a
+budget matters most. Date-only columns must be re-parsed *in* the display
+timezone, never converted.
 
 ---
 
