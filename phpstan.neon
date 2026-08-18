@@ -1,0 +1,18 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app
+        - database
+        - routes
+        - tests
+
+    # Level 6 is the practical entry point for a fresh Laravel codebase and
+    # already catches the classes of bug that matter here: wrong argument
+    # types in cost calculations and missing return types on services.
+    # Raise toward 8 as the domain layer stabilises (target: M6).
+    level: 6
+
+    # Add narrowly-scoped ignoreErrors entries here for Eloquent dynamic
+    # access that Larastan cannot model, rather than lowering the level.
