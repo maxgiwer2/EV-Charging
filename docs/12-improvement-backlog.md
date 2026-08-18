@@ -85,8 +85,10 @@ real data rather than tuning it blind.
 `budgets` and `notifications` tables, models and factories exist. FR-013
 thresholds (50/80/100%) and FR-014 alerts have no service behind them.
 Notifications *are* raised for duplicates and review, so the plumbing works.
-**Still outstanding.** The cost engine that produces the spend figures now
-exists, so budget evaluation can build directly on `AnalyticsService` — M5/M6.
+**Partly resolved in M5:** FR-014 anomalous-expense alerts now exist
+(`AnomalyDetectionService::detectAndNotify`). **Budget thresholds (FR-013)
+remain** — the spend figures they need are available from `AnalyticsService`,
+so this is a small addition for M6.
 
 ---
 

@@ -18,7 +18,7 @@
 - `architecture/system-architecture.md` — System Architecture
 - `docs/11-development-setup.md` — Development setup และ quality gates
 - `docs/12-improvement-backlog.md` — ช่องโหว่ที่เหลือและแผนปรับปรุง
-- `docs/13-ai-assistant.md` — AI assistant (advisory เท่านั้น) และ Ollama
+- `docs/13-ai-assistant.md` — AI assistant, anomaly detection, forecasting
 - `prompts/CLAUDE_CODE_MASTER_PROMPT.md` — Prompt หลักสำหรับ Claude Code
 - `prompts/AGENTS.md` — Agent roles และ workflow
 
@@ -55,8 +55,8 @@ Laravel 12 / PHP 8.4 / MySQL 8.4 / Redis 7 / nginx — Blade + Tailwind + Alpine
 | M2 Receipts/OCR | ✅ Private storage, magic-byte validation, OCR adapter, duplicate detection, review UI |
 | M3 Analytics | ✅ Cost engine, session confirm/cancel, dashboard, reports, CSV/XLSX/PDF export |
 | M4 Tariff | ✅ Versioned tariffs + overlap/immutability, TOU, Typhoon OCR, upload/quick-entry/vehicle UI |
-| M5 AI | 🟡 AI assistant + Ollama เสร็จ — anomaly detection/forecasting ยังไม่ทำ |
-| M6 Production | ⬜ |
+| M5 AI | ✅ AI assistant (Ollama, advisory), anomaly detection, forecasting |
+| M6 Production | ⬜ ถัดไป |
 
 ## หลักสำคัญ
 1. Receipt Original Value ห้ามถูกเขียนทับด้วยค่าที่คำนวณ

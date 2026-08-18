@@ -354,3 +354,17 @@ Quick entry confirms in one step: unlike a receipt there is no second source to
 reconcile against, so leaving it in `DRAFT` would just hide the charge from the
 dashboard. The web routes reuse the API form requests, so a validation rule
 cannot be enforced on one path but not the other.
+
+---
+
+## Insights (M5)
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/assistant/ask` | AI assistant, advisory; throttled 10/min |
+| GET | `/insights/anomalies` | `?notify=1` also raises FR-014 alerts |
+| GET | `/insights/forecast` | run-rate projection for the current month |
+
+All three are **advisory** and say so in `meta`. Anomalies and forecasting are
+statistical rather than AI; the assistant never produces a number at all. See
+`docs/13-ai-assistant.md` for the reasoning and the guarantees.

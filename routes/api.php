@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\ChargingNetworkController;
 use App\Http\Controllers\Api\V1\ChargingSessionController;
 use App\Http\Controllers\Api\V1\ChargingStationController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\InsightsController;
 use App\Http\Controllers\Api\V1\ReceiptController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\TariffController;
@@ -61,6 +62,13 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('dashboard/summary', [DashboardController::class, 'summary'])->name('dashboard.summary');
     Route::get('dashboard/trends', [DashboardController::class, 'trends'])->name('dashboard.trends');
     Route::get('dashboard/breakdowns', [DashboardController::class, 'breakdowns'])->name('dashboard.breakdowns');
+
+    /*
+     * Insights (docs/02 FR-018). Statistical, not AI: they inform decisions
+     * about money, so they must be reproducible and explainable.
+     */
+    Route::get('insights/anomalies', [InsightsController::class, 'anomalies'])->name('insights.anomalies');
+    Route::get('insights/forecast', [InsightsController::class, 'forecast'])->name('insights.forecast');
 
     /*
      * AI assistant (docs/02 FR-017).

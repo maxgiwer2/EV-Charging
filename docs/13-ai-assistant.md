@@ -111,3 +111,89 @@ figures as dollars, which on a financial answer is simply wrong.
 - Anomaly detection and forecasting (docs/09 M5) are **not implemented**. Both
   should be deterministic and statistical, not LLM work, for the same reason
   the figures above are.
+
+---
+
+# Anomaly Detection and Forecasting
+
+Both satisfy docs/02 FR-018, and both are **statistical, not AI** — for the same
+reason as everything above. They inform decisions about money, so they have to
+be reproducible and explainable. A model that flags a different set of sessions
+on each run is not a detector.
+
+## Anomaly detection
+
+`GET /api/v1/insights/anomalies` (`?notify=1` also raises FR-014 alerts)
+
+Modified z-score over the **median absolute deviation**, per user, over
+confirmed sessions from the last 12 months. Three measures are judged: cost per
+kWh, total amount, and energy.
+
+### Why median and MAD, not mean and standard deviation
+
+A single unusually expensive charge inflates the standard deviation enough to
+hide itself — a mean-based detector goes quiet exactly when there is something
+to report. The median barely moves. There is a test for this
+(`it is not blinded by the outlier it is looking for`): a 5350.00 charge against
+a 214.00 baseline is caught and reported as high severity.
+
+### What keeps it from being noise
+
+| Rule | Reason |
+|---|---|
+| Minimum 8 sessions of history | Below that the median is meaningless and every early session looks extreme |
+| Per user, never global | Home-only charging has a different normal from motorway rapid charging |
+| Only the high side reported | A cheaper-than-usual charge is good news, not an interruption |
+| Sessions missing a measure are skipped | A zero unit cost would look like a free charge and drag the baseline down |
+| Drafts and cancellations excluded | Not fact, and never happened (AT-009) |
+| One notification per session | Re-running must not spam what the user has seen |
+
+### The zero-spread case
+
+When every past session is identical the MAD is zero and the z-score is
+undefined. Rather than going silent — that user is exactly the one for whom a
+sudden fourfold charge is obvious — the detector falls back to a relative
+comparison, scaled so the same 3.5 threshold governs both paths (50% above the
+median scores 3.5).
+
+Findings are **advisory**: an expensive charge is often perfectly legitimate, a
+motorway rapid charger on a long trip. The reasons and the baseline travel with
+each finding so a person can judge.
+
+## Forecasting
+
+`GET /api/v1/insights/forecast`
+
+A run-rate projection of the current calendar month, in the user's local month
+(docs/10 rule 7).
+
+Deliberately not a regression. Personal charging data is a handful of points per
+month with no seasonality worth modelling, so a regression would produce a more
+precise-looking number without being a more accurate one — and precision that is
+not accuracy is exactly what misleads someone budgeting.
+
+### It refuses more often than it answers
+
+| Condition | Result |
+|---|---|
+| Fewer than 5 elapsed days | `too_early_in_period` |
+| Fewer than 3 sessions | `not_enough_sessions` |
+| No spend recorded | `no_spend_recorded` |
+
+A month projected from two days is a confident-looking figure with nothing
+behind it, and people act on those.
+
+### Caveats are stated, not buried
+
+`caveats` lists what would make the projection unreliable — `early_in_period`,
+`few_sessions`, `no_previous_period`, `well_above_previous_period`. A user
+comparing a projection against their budget deserves to know it rests on four
+days of data rather than discovering it later.
+
+`typical_monthly_spend` is the **median** of recent months, not the mean: one
+month with a road trip in it should not redefine typical. Months with no
+charging are skipped rather than counted as zero — a month away should not drag
+the figure down as though the user drove normally and spent nothing.
+
+Responses carry `advisory: true` so a client never renders a projection as a
+commitment.
