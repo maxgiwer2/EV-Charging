@@ -6,13 +6,24 @@ parameters:
         - app
         - database
         - routes
-        - tests
 
     # Level 6 is the practical entry point for a fresh Laravel codebase and
     # already catches the classes of bug that matter here: wrong argument
     # types in cost calculations and missing return types on services.
     # Raise toward 8 as the domain layer stabilises (target: M6).
     level: 6
+
+    # `tests` is deliberately not analysed.
+    #
+    # Pest rebinds $this inside every test closure to the TestCase at runtime,
+    # which PHPStan cannot model statically: `$this->getJson(...)` and
+    # `$this->actingAs(...)` are reported as calls on PHPUnit\Framework\TestCase,
+    # producing dozens of false positives that would have to be silenced with
+    # blanket ignores -- which would then also hide real mistakes.
+    #
+    # Test code is still checked: Pint formats it, and the suite itself is the
+    # verification. Revisit if a maintained PHPStan extension for Pest closures
+    # becomes available.
 
     # Add narrowly-scoped ignoreErrors entries here for Eloquent dynamic
     # access that Larastan cannot model, rather than lowering the level.

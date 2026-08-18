@@ -1,5 +1,10 @@
 # Database ERD
 
+> Corrected during M1: `effective_from` / `effective_to` were shown on
+> `charging_tariffs`, which contradicted `database/schema.sql` and the
+> versioning design. The effective period belongs to `tariff_versions` --
+> that is what makes a historical session reproducible (AT-006).
+
 ```mermaid
 erDiagram
     users ||--o{ charging_sessions : creates
@@ -77,8 +82,6 @@ erDiagram
       bigint station_id FK
       string name
       string charging_type
-      datetime effective_from
-      datetime effective_to
       boolean is_active
     }
 
@@ -102,8 +105,10 @@ erDiagram
       bigint vehicle_id FK
       bigint station_id FK
       bigint tariff_version_id FK
+      bigint connector_id FK
       datetime started_at
       datetime ended_at
+      int duration_minutes
       string charging_type
       string charging_mode
       decimal soc_before
@@ -129,12 +134,15 @@ erDiagram
       bigint id PK
       bigint charging_session_id FK
       bigint uploaded_by FK
+      bigint verified_by FK
       string file_path
       string mime_type
       bigint file_size
       string sha256
       string status
+      datetime verified_at
       datetime uploaded_at
+      datetime deleted_at
     }
 
     receipt_ocr_results {

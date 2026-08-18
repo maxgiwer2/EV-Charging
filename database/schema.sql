@@ -1,4 +1,9 @@
 -- MySQL 8+
+--
+-- This file is the schema of record. The Laravel migrations under
+-- database/migrations/ are the executable source and were generated from it;
+-- where the two intentionally differ, the reason is noted inline below.
+-- Changes made during M1 are marked with a comment.
 CREATE DATABASE IF NOT EXISTS ev_charging CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE ev_charging;
 
@@ -6,7 +11,12 @@ CREATE TABLE users (
   id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(150) NOT NULL,
   email VARCHAR(190) NOT NULL UNIQUE,
-  password_hash VARCHAR(255) NOT NULL,
+  -- Named `password` in the Laravel implementation: the framework's
+  -- Authenticatable contract, password broker and `hashed` cast all key on
+  -- that name (docs/10 rule 1). Still a bcrypt hash, never plaintext.
+  password VARCHAR(255) NOT NULL,
+  email_verified_at DATETIME NULL,
+  remember_token VARCHAR(100) NULL,
   role ENUM('admin','user','viewer') NOT NULL DEFAULT 'user',
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -72,6 +82,7 @@ CREATE TABLE charging_tariffs (
   station_id BIGINT UNSIGNED NULL,
   name VARCHAR(200) NOT NULL,
   charging_type ENUM('HOME','PUBLIC','WORKPLACE','DESTINATION','FREE','OTHER') NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT TRUE,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_tariff_network FOREIGN KEY (network_id) REFERENCES charging_networks(id),
@@ -101,14 +112,20 @@ CREATE TABLE charging_sessions (
   vehicle_id BIGINT UNSIGNED NOT NULL,
   station_id BIGINT UNSIGNED NULL,
   tariff_version_id BIGINT UNSIGNED NULL,
+  connector_id BIGINT UNSIGNED NULL,
   started_at DATETIME NOT NULL,
   ended_at DATETIME NULL,
+  duration_minutes INT UNSIGNED NULL,
   charging_type ENUM('HOME','PUBLIC','WORKPLACE','DESTINATION','FREE','OTHER') NOT NULL,
   charging_mode ENUM('AC','DC','OTHER') NULL,
+  power_kw DECIMAL(8,2) NULL,
   soc_before DECIMAL(5,2) NULL,
   soc_after DECIMAL(5,2) NULL,
   energy_kwh DECIMAL(10,3) NULL,
   energy_source ENUM('RECEIPT','CHARGER','MANUAL','SOC_ESTIMATE') NULL,
+  -- Charger meter readings (FR-003).
+  meter_start_kwh DECIMAL(12,3) NULL,
+  meter_end_kwh DECIMAL(12,3) NULL,
   odometer_before_km DECIMAL(12,1) NULL,
   odometer_after_km DECIMAL(12,1) NULL,
   distance_km DECIMAL(12,1) NULL,
@@ -150,8 +167,16 @@ CREATE TABLE receipts (
   sha256 CHAR(64) NOT NULL,
   receipt_number VARCHAR(150) NULL,
   status ENUM('OCR_PENDING','OCR_PROCESSING','OCR_REVIEW','VERIFIED','REJECTED') NOT NULL DEFAULT 'OCR_PENDING',
+  -- Who confirmed the extracted values, and when (AT-004/AT-010).
+  verified_by BIGINT UNSIGNED NULL,
+  verified_at DATETIME NULL,
   uploaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY uq_receipt_hash(sha256),
+  -- Financial record: soft delete only (docs/10 rule 15).
+  deleted_at DATETIME NULL,
+  -- NOT unique: a unique index makes a re-upload fail with an integrity
+  -- error, but AT-005 requires the system to FLAG a probable duplicate and
+  -- let a human decide. Detection lives in DuplicateDetectionService.
+  INDEX idx_receipt_hash(sha256),
   CONSTRAINT fk_receipt_session FOREIGN KEY (charging_session_id) REFERENCES charging_sessions(id),
   CONSTRAINT fk_receipt_user FOREIGN KEY (uploaded_by) REFERENCES users(id)
 ) ENGINE=InnoDB;
@@ -176,6 +201,8 @@ CREATE TABLE payments (
   amount DECIMAL(12,2) NOT NULL,
   reference_no VARCHAR(150) NULL,
   paid_at DATETIME NULL,
+  -- Financial record: soft delete only (docs/10 rule 15).
+  deleted_at DATETIME NULL,
   CONSTRAINT fk_payment_session FOREIGN KEY (charging_session_id) REFERENCES charging_sessions(id)
 ) ENGINE=InnoDB;
 

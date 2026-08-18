@@ -49,8 +49,8 @@ Laravel 12 / PHP 8.4 / MySQL 8.4 / Redis 7 / nginx — Blade + Tailwind + Alpine
 | Milestone | Status |
 |---|---|
 | M0 Foundation | ✅ Docker stack, Laravel 12, CI, Pint + Larastan + Pest |
-| M1 Core | ⬜ Auth/RBAC, vehicles, stations, networks, charging sessions |
-| M2 Receipts/OCR | ⬜ |
+| M1 Core | ✅ Auth/RBAC + policies, 14 tables, vehicles/networks/stations/connectors/sessions, audit trail |
+| M2 Receipts/OCR | ⬜ ถัดไป |
 | M3 Analytics | ⬜ |
 | M4 Tariff | ⬜ |
 | M5 AI | ⬜ |
