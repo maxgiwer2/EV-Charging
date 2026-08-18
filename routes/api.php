@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Api\V1\AssistantController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\ChargingConnectorController;
 use App\Http\Controllers\Api\V1\ChargingNetworkController;
@@ -60,6 +61,17 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('dashboard/summary', [DashboardController::class, 'summary'])->name('dashboard.summary');
     Route::get('dashboard/trends', [DashboardController::class, 'trends'])->name('dashboard.trends');
     Route::get('dashboard/breakdowns', [DashboardController::class, 'breakdowns'])->name('dashboard.breakdowns');
+
+    /*
+     * AI assistant (docs/02 FR-017).
+     *
+     * Advisory: every figure is computed by AnalyticsService and the model
+     * only phrases it. Throttled separately because a local model takes
+     * seconds per call and would otherwise consume the general API budget.
+     */
+    Route::post('assistant/ask', [AssistantController::class, 'ask'])
+        ->middleware('throttle:assistant')
+        ->name('assistant.ask');
 
     /*
      * Reports and exports (docs/07 -> Reports, FR-011/FR-012, AT-008).

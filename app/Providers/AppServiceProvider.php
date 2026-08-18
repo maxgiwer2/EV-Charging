@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Contracts\AiProviderInterface;
 use App\Contracts\OcrProviderInterface;
 use App\Models\ChargingConnector;
 use App\Models\ChargingNetwork;
@@ -19,6 +20,7 @@ use App\Policies\ChargingStationPolicy;
 use App\Policies\ChargingTariffPolicy;
 use App\Policies\ReceiptPolicy;
 use App\Policies\VehiclePolicy;
+use App\Services\Ai\AiProviderManager;
 use App\Services\Ocr\OcrProviderManager;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
@@ -40,6 +42,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(
             OcrProviderInterface::class,
             fn ($app): OcrProviderInterface => $app->make(OcrProviderManager::class)->driver(),
+        );
+
+        // Same pattern for AI: the assistant depends on the interface, so the
+        // provider can be swapped without touching domain code.
+        $this->app->singleton(AiProviderManager::class);
+
+        $this->app->bind(
+            AiProviderInterface::class,
+            fn ($app): AiProviderInterface => $app->make(AiProviderManager::class)->driver(),
         );
     }
 
@@ -73,6 +84,11 @@ class AppServiceProvider extends ServiceProvider
 
         // Login is throttled far harder and keyed on email+IP, so an attacker
         // cannot spread a password-guessing run across the general budget.
+        // A local model takes seconds per call, so the assistant gets its own
+        // small budget rather than draining the general API allowance.
+        RateLimiter::for('assistant', fn (Request $request): Limit => Limit::perMinute(10)
+            ->by((string) (Auth::id() ?? $request->ip())));
+
         RateLimiter::for('auth', fn (Request $request): Limit => Limit::perMinute(5)
             ->by(mb_strtolower((string) $request->input('email')).'|'.$request->ip()));
     }
