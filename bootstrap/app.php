@@ -28,6 +28,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             ThrottleRequests::using('api'),
         ]);
+
+        // The sign-in route is named `web.login`, not Laravel's default
+        // `login`, so the guest redirect has to be pointed at it explicitly.
+        // API requests are unaffected: they get a 401 envelope instead.
+        $middleware->redirectGuestsTo(fn () => route('web.login'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         /*

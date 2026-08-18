@@ -4,16 +4,20 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Contracts\OcrProviderInterface;
 use App\Models\ChargingConnector;
 use App\Models\ChargingNetwork;
 use App\Models\ChargingSession;
 use App\Models\ChargingStation;
+use App\Models\Receipt;
 use App\Models\Vehicle;
 use App\Policies\ChargingConnectorPolicy;
 use App\Policies\ChargingNetworkPolicy;
 use App\Policies\ChargingSessionPolicy;
 use App\Policies\ChargingStationPolicy;
+use App\Policies\ReceiptPolicy;
 use App\Policies\VehiclePolicy;
+use App\Services\Ocr\OcrProviderManager;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -26,7 +30,15 @@ class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        //
+        // Domain code depends on the interface; the concrete adapter is chosen
+        // by config('ocr.driver') so no vendor SDK reaches the receipt logic
+        // (architecture/system-architecture.md -> OCR Provider Adapter).
+        $this->app->singleton(OcrProviderManager::class);
+
+        $this->app->bind(
+            OcrProviderInterface::class,
+            fn ($app): OcrProviderInterface => $app->make(OcrProviderManager::class)->driver(),
+        );
     }
 
     public function boot(): void
@@ -70,5 +82,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ChargingNetwork::class, ChargingNetworkPolicy::class);
         Gate::policy(ChargingStation::class, ChargingStationPolicy::class);
         Gate::policy(ChargingConnector::class, ChargingConnectorPolicy::class);
+        Gate::policy(Receipt::class, ReceiptPolicy::class);
     }
 }

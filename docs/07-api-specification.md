@@ -124,3 +124,78 @@ The `to` bound is exclusive, so a session on a period boundary is never counted 
   by most clients and defeat docs/10 rule 4.
 - Sessions are created as `DRAFT`. Money fields are never accepted from the
   client; totals come from the cost engine (M3).
+
+---
+
+## Receipts (M2)
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/receipts` | own receipts (admin: all); filters `awaiting_review`, `status` |
+| POST | `/receipts` | multipart `file`, optional `charging_session_id` |
+| GET | `/receipts/{id}` | includes `ocr_results` with per-field confidence |
+| GET | `/receipts/{id}/download` | streams the file; **only** way to read it |
+| POST | `/receipts/{id}/ocr` | re-queue OCR; 202 |
+| POST | `/receipts/{id}/verify` | human confirmation — the only path to `VERIFIED` |
+| POST | `/receipts/{id}/reject` | dismiss, optional `reason` |
+
+### Upload validation
+
+Both the detected MIME type and the file's leading magic bytes must match the
+allowlist in `config/receipts.php`. A client-supplied `Content-Type` and the
+filename extension are never trusted, so a script renamed to `.jpg` is rejected.
+The stored filename is a generated ULID; the client's filename is kept only for
+display. Size cap comes from `RECEIPT_MAX_SIZE_KB`.
+
+### Review lifecycle
+
+```
+OCR_PENDING -> OCR_PROCESSING -> OCR_REVIEW -> VERIFIED | REJECTED
+```
+
+`VERIFIED` and `REJECTED` are terminal. An illegal transition returns
+`INVALID_STATE_TRANSITION` (409).
+
+**OCR never auto-verifies** (FR-005, AT-004). Every run lands in `OCR_REVIEW`
+regardless of confidence, including a failed run — a human can still key the
+values in from the stored image. Confidence only decides which fields the review
+UI highlights.
+
+### Verification payload
+
+`POST /receipts/{id}/verify` takes the values a human approved, which may differ
+from what OCR read:
+
+```json
+{ "vehicle_id": 1, "charging_type": "PUBLIC", "transaction_date": "2026-08-18T10:30:00Z",
+  "energy_kwh": 42.5, "unit_price": 7.5, "subtotal": 318.75, "vat": 22.31, "total": 341.06 }
+```
+
+The breakdown must add up to `total` within 0.01 — real receipts round each line
+independently, so an exact match would reject legitimate paperwork, but a larger
+gap means a mistyped figure that would otherwise become the charged amount.
+
+On success the receipt is linked to a `CONFIRMED` charging session with
+`energy_source: RECEIPT` (the highest precedence in FR-009), and the breakdown is
+frozen into `charging_cost_lines` (AT-006).
+
+### Originals are never overwritten
+
+`receipt_ocr_results` is append-only: each run inserts a row, and a reviewer's
+corrections go to `receipts.verified_data` instead. A disputed figure can always
+be traced both to what the provider read and to what a person approved
+(docs/05, README rule 1).
+
+### Duplicates are flagged, not blocked
+
+A probable duplicate still uploads successfully (201) with `duplicate_matches`
+populated and a notification raised. AT-005 requires flagging, and re-uploading
+the same image to correct a mis-keyed session is legitimate. Signals: identical
+file hash (1.0), shared receipt number (0.9), same station/amount/energy within
+90 minutes (0.7). Comparison never crosses users.
+
+### OCR provider
+
+Domain code depends on `OcrProviderInterface` only. `config('ocr.driver')`
+selects the adapter; register new ones in `OcrProviderManager`. The default
+`none` driver extracts nothing and says so, rather than inventing values.

@@ -9,6 +9,7 @@ use Database\Factories\ReceiptOcrResultFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * One OCR provider run. Append-only: rows are inserted, never updated, so the
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  *
  * @property array<string, mixed>|null $extracted_data
  * @property OcrResultStatus $status
+ * @property Carbon $processed_at
  */
 class ReceiptOcrResult extends Model
 {

@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * An uploaded receipt file and its review state (docs/02 FR-004, FR-005).
@@ -20,6 +21,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * file paths, and the API returns a download route instead.
  *
  * @property ReceiptStatus $status
+ * @property Carbon $uploaded_at
+ * @property Carbon|null $verified_at
+ * @property array<string, mixed>|null $verified_data
+ * @property array<int, mixed>|null $duplicate_matches
  */
 class Receipt extends Model
 {
@@ -48,6 +53,10 @@ class Receipt extends Model
     {
         return [
             'status' => ReceiptStatus::class,
+            // What the human approved, kept apart from the OCR output so the
+            // provider's original reading is never overwritten (docs/05).
+            'verified_data' => 'array',
+            'duplicate_matches' => 'array',
             'file_size' => 'integer',
             'uploaded_at' => 'datetime',
             'verified_at' => 'datetime',
