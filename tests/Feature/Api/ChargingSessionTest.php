@@ -127,8 +127,11 @@ it('rejects a connector that belongs to a different station', function (): void 
         ->assertJsonPath('error.details.connector_id.0', 'The connector does not belong to the selected station.');
 });
 
-it('ignores client-supplied money fields', function (): void {
-    // Totals come from the cost engine, never from request input
+it('recomposes client-supplied money through the cost engine', function (): void {
+    // Money is accepted -- someone recording a home charge knows what they
+    // paid -- but it is validated and reassembled by CostCalculationService so
+    // the parts always reconcile with the total. The columns are not fillable,
+    // so no amount reaches the database by mass assignment
     // (docs/10 rules 3 and 10).
     $user = User::factory()->create();
     $vehicle = Vehicle::factory()->create(['user_id' => $user->id]);
@@ -137,12 +140,47 @@ it('ignores client-supplied money fields', function (): void {
         ->postJson('/api/v1/charging-sessions', [
             'vehicle_id' => $vehicle->id,
             'started_at' => now()->toIso8601String(),
-            'charging_type' => 'PUBLIC',
-            'total_amount' => 99999.99,
-            'subtotal' => 99999.99,
+            'charging_type' => 'HOME',
+            'energy_kwh' => 40,
+            'subtotal' => 200,
+            'vat' => 14,
+            'total' => 214,
         ])
         ->assertCreated()
-        ->assertJsonPath('data.total_amount', '0.00');
+        ->assertJsonPath('data.subtotal', '200.00')
+        ->assertJsonPath('data.vat_amount', '14.00')
+        ->assertJsonPath('data.total_amount', '214.00');
+});
+
+it('derives the subtotal from a unit price when no amount is given', function (): void {
+    $user = User::factory()->create();
+    $vehicle = Vehicle::factory()->create(['user_id' => $user->id]);
+
+    $this->actingAs($user)
+        ->postJson('/api/v1/charging-sessions', [
+            'vehicle_id' => $vehicle->id,
+            'started_at' => now()->toIso8601String(),
+            'charging_type' => 'HOME',
+            'energy_kwh' => 42.5,
+            'unit_price' => 7.4567,
+        ])
+        ->assertCreated()
+        // 42.5 * 7.4567, rounded once at the end.
+        ->assertJsonPath('data.subtotal', '316.91');
+});
+
+it('rejects a negative amount', function (): void {
+    $user = User::factory()->create();
+    $vehicle = Vehicle::factory()->create(['user_id' => $user->id]);
+
+    $this->actingAs($user)
+        ->postJson('/api/v1/charging-sessions', [
+            'vehicle_id' => $vehicle->id,
+            'started_at' => now()->toIso8601String(),
+            'charging_type' => 'HOME',
+            'total' => -50,
+        ])
+        ->assertStatus(422);
 });
 
 it('soft deletes a session so financial history survives', function (): void {

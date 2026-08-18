@@ -16,8 +16,10 @@ use Illuminate\Validation\Rule;
 /**
  * docs/02 FR-003.
  *
- * Money fields are absent by design: totals are produced by the cost engine
- * from energy, tariff and receipt data, never accepted from the client
+ * Money is accepted -- a user recording a home charge knows what they paid --
+ * but it is validated here and then recomposed by CostCalculationService, so
+ * the stored subtotal/VAT/total always reconcile with each other. The columns
+ * are not fillable, so no amount can reach the database by mass assignment
  * (docs/10 rules 3 and 10).
  */
 class StoreChargingSessionRequest extends FormRequest
@@ -58,6 +60,18 @@ class StoreChargingSessionRequest extends FormRequest
             'odometer_before_km' => ['nullable', 'numeric', 'min:0'],
             'odometer_after_km' => ['nullable', 'numeric', 'min:0', 'gte:odometer_before_km'],
             'distance_km' => ['nullable', 'numeric', 'min:0'],
+
+            // Money. Bounded by the DECIMAL(12,2) columns so a value cannot be
+            // silently truncated by MySQL.
+            'unit_price' => ['nullable', 'numeric', 'min:0', 'max:99999999.9999'],
+            'subtotal' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'service_fee' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'parking_fee' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            // Supplied as a positive amount; applied as a reduction by the
+            // cost engine, so a caller cannot flip the sign.
+            'discount' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'vat' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
+            'total' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
 
             'notes' => ['nullable', 'string', 'max:2000'],
         ];

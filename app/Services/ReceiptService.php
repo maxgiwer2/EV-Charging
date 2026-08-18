@@ -9,7 +9,6 @@ use App\Enums\ReceiptStatus;
 use App\Enums\SessionStatus;
 use App\Exceptions\InvalidReceiptTransition;
 use App\Models\AuditLog;
-use App\Models\ChargingCostLine;
 use App\Models\ChargingSession;
 use App\Models\Notification;
 use App\Models\Receipt;
@@ -35,6 +34,7 @@ class ReceiptService
         private readonly ReceiptStorageService $storage,
         private readonly DuplicateDetectionService $duplicates,
         private readonly AuditLogService $audit,
+        private readonly ChargingSessionService $sessions,
     ) {}
 
     /**
@@ -225,28 +225,42 @@ class ReceiptService
             $session->vehicle_id = (int) $confirmed['vehicle_id'];
             $session->charging_type = $confirmed['charging_type'];
             $session->started_at = $confirmed['transaction_date'];
+            // Set explicitly rather than relying on the column default: a
+            // freshly saved model does not load database defaults into memory,
+            // so the status would read as null when confirm() inspects it.
+            $session->status = SessionStatus::DRAFT;
         }
 
         $before = $session->exists ? $session->getOriginal() : null;
 
         $session->station_id = $confirmed['station_id'] ?? $session->station_id;
-        $session->energy_kwh = $confirmed['energy_kwh'] ?? $session->energy_kwh;
-        $session->energy_source = EnergySource::RECEIPT;
+        $session->save();
 
-        // Money is recorded from the approved receipt, not recalculated: the
-        // amount actually billed is the fact, and a computed figure that
-        // disagreed with the paper would simply be wrong (docs/10 rule 6).
-        $session->subtotal = $confirmed['subtotal'] ?? 0;
-        $session->discount_amount = $confirmed['discount'] ?? 0;
-        $session->vat_amount = $confirmed['vat'] ?? 0;
-        $session->total_amount = $confirmed['total'] ?? 0;
+        // Money and energy go through the cost engine, which applies the FR-009
+        // precedence and composes the totals with decimal-safe arithmetic.
+        // RECEIPT is the highest precedence, so a billed figure always wins
+        // over a manual entry or a SOC estimate.
+        $this->sessions->applyAmounts(
+            $session,
+            [
+                'energy_kwh' => $this->stringOrNull($confirmed['energy_kwh'] ?? null),
+                'unit_price' => $this->stringOrNull($confirmed['unit_price'] ?? null),
+                'subtotal' => $this->stringOrNull($confirmed['subtotal'] ?? null),
+                'service_fee' => $this->stringOrNull($confirmed['service_fee'] ?? null),
+                'parking_fee' => $this->stringOrNull($confirmed['parking_fee'] ?? null),
+                'discount' => $this->stringOrNull($confirmed['discount'] ?? null),
+                'vat' => $this->stringOrNull($confirmed['vat'] ?? null),
+                // The receipt's own total is authoritative even if it differs
+                // from the sum by a satang: the amount actually billed is the
+                // fact (docs/10 rule 6).
+                'total' => $this->stringOrNull($confirmed['total'] ?? null),
+            ],
+            EnergySource::RECEIPT,
+        );
 
         // A verified receipt is confirmed financial fact, so the session now
         // counts toward dashboard totals (AT-009).
-        $session->status = SessionStatus::CONFIRMED;
-        $session->save();
-
-        $this->writeCostLines($session, $confirmed);
+        $this->sessions->confirm($session, $verifier);
 
         $before === null
             ? $this->audit->logCreate($session, $verifier->id)
@@ -255,51 +269,9 @@ class ReceiptService
         return $session;
     }
 
-    /**
-     * Freeze the charged breakdown (AT-006).
-     *
-     * Replaced wholesale rather than edited, so the stored lines always
-     * describe one coherent approved state.
-     *
-     * @param  array<string, mixed>  $confirmed
-     */
-    private function writeCostLines(ChargingSession $session, array $confirmed): void
+    private function stringOrNull(mixed $value): ?string
     {
-        $session->costLines()->delete();
-
-        $lines = [
-            [
-                ChargingCostLine::TYPE_ENERGY,
-                $confirmed['energy_kwh'] ?? null,
-                $confirmed['unit_price'] ?? null,
-                $confirmed['subtotal'] ?? null,
-            ],
-            [ChargingCostLine::TYPE_SERVICE_FEE, null, null, $confirmed['service_fee'] ?? null],
-            [ChargingCostLine::TYPE_PARKING_FEE, null, null, $confirmed['parking_fee'] ?? null],
-            // Stored negative so the lines sum to the subtotal without
-            // special-casing by type.
-            [
-                ChargingCostLine::TYPE_DISCOUNT,
-                null,
-                null,
-                isset($confirmed['discount']) ? -abs((float) $confirmed['discount']) : null,
-            ],
-            [ChargingCostLine::TYPE_VAT, null, null, $confirmed['vat'] ?? null],
-        ];
-
-        foreach ($lines as [$type, $quantity, $unitPrice, $amount]) {
-            // A zero is a real charged value; only an absent one is skipped.
-            if ($amount === null || $amount === '') {
-                continue;
-            }
-
-            $session->costLines()->create([
-                'line_type' => $type,
-                'quantity' => $quantity,
-                'unit_price' => $unitPrice,
-                'amount' => $amount,
-            ]);
-        }
+        return $value === null || $value === '' ? null : (string) $value;
     }
 
     /**

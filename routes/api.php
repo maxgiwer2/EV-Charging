@@ -7,8 +7,11 @@ use App\Http\Controllers\Api\V1\ChargingConnectorController;
 use App\Http\Controllers\Api\V1\ChargingNetworkController;
 use App\Http\Controllers\Api\V1\ChargingSessionController;
 use App\Http\Controllers\Api\V1\ChargingStationController;
+use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\ReceiptController;
+use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\VehicleController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -38,6 +41,39 @@ Route::middleware('auth:sanctum')->group(function (): void {
     // Owned by the authenticated user.
     Route::apiResource('vehicles', VehicleController::class);
     Route::apiResource('charging-sessions', ChargingSessionController::class);
+    // Confirmation is a deliberate act, separate from editing: it is the point
+    // where an entry becomes financial fact (AT-009).
+    Route::post('charging-sessions/{charging_session}/confirm', [ChargingSessionController::class, 'confirm'])
+        ->name('charging-sessions.confirm');
+    Route::post('charging-sessions/{charging_session}/cancel', [ChargingSessionController::class, 'cancel'])
+        ->name('charging-sessions.cancel');
+    Route::post('charging-sessions/{charging_session}/reopen', [ChargingSessionController::class, 'reopen'])
+        ->name('charging-sessions.reopen');
+
+    /*
+     * Dashboard (docs/07 -> Dashboard, docs/06).
+     *
+     * Every figure comes from CONFIRMED sessions only, so the dashboard
+     * reconciles with the underlying records (AT-009).
+     */
+    Route::get('dashboard/summary', [DashboardController::class, 'summary'])->name('dashboard.summary');
+    Route::get('dashboard/trends', [DashboardController::class, 'trends'])->name('dashboard.trends');
+    Route::get('dashboard/breakdowns', [DashboardController::class, 'breakdowns'])->name('dashboard.breakdowns');
+
+    /*
+     * Reports and exports (docs/07 -> Reports, FR-011/FR-012, AT-008).
+     *
+     * They share AnalyticsFilter with the dashboard, so an export contains
+     * exactly the records the same filter selects.
+     */
+    Route::get('reports/charging', [ReportController::class, 'charging'])->name('reports.charging');
+    Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
+    Route::get('reports/vehicles', fn (Request $r) => app(ReportController::class)->breakdown($r, 'vehicle'))
+        ->name('reports.vehicles');
+    Route::get('reports/stations', fn (Request $r) => app(ReportController::class)->breakdown($r, 'station'))
+        ->name('reports.stations');
+    Route::get('reports/networks', fn (Request $r) => app(ReportController::class)->breakdown($r, 'network'))
+        ->name('reports.networks');
 
     /*
      * Receipts (docs/07 -> Receipts, docs/04 -> Receipt OCR flow).

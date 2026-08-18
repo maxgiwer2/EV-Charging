@@ -16,12 +16,15 @@
 
 <nav class="border-b border-slate-200 bg-white">
     <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-        <a href="{{ route('receipts.review.index') }}" class="text-sm font-semibold tracking-tight">
+        <a href="{{ route('dashboard') }}" class="text-sm font-semibold tracking-tight">
             {{ config('app.name') }}
         </a>
 
         @auth
             <div class="flex items-center gap-4 text-sm">
+                <a href="{{ route('dashboard') }}" class="text-slate-600 hover:text-slate-900">
+                    Dashboard
+                </a>
                 <a href="{{ route('receipts.review.index') }}" class="text-slate-600 hover:text-slate-900">
                     Receipts
                 </a>

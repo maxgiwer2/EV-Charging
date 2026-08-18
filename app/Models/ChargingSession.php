@@ -27,6 +27,14 @@ use Illuminate\Support\Carbon;
  *
  * @property Carbon $started_at
  * @property Carbon|null $ended_at
+ * @property string|null $energy_kwh
+ * @property string|null $distance_km
+ * @property string|null $odometer_before_km
+ * @property string|null $odometer_after_km
+ * @property string $subtotal
+ * @property string $discount_amount
+ * @property string $vat_amount
+ * @property string $total_amount
  * @property SessionStatus $status
  * @property ChargingType $charging_type
  * @property ChargingMode|null $charging_mode

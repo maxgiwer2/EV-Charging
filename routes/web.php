@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\ReceiptReviewController;
 use App\Http\Controllers\Web\SessionController;
 use Illuminate\Support\Facades\Route;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::redirect('/', '/receipts');
+Route::redirect('/', '/dashboard');
 
 Route::middleware('guest')->group(function (): void {
     Route::get('login', [SessionController::class, 'create'])->name('web.login');
@@ -32,6 +33,8 @@ Route::post('logout', [SessionController::class, 'destroy'])
     ->name('web.logout');
 
 Route::middleware('auth')->group(function (): void {
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
     Route::get('receipts', [ReceiptReviewController::class, 'index'])->name('receipts.review.index');
     Route::get('receipts/{receipt}', [ReceiptReviewController::class, 'show'])->name('receipts.review.show');
     // Streams the image into the review page; policy-checked, never a

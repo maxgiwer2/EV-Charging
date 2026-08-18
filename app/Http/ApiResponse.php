@@ -22,7 +22,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 final class ApiResponse
 {
     /**
-     * @param  JsonResource|array<string, mixed>  $data
+     * @param  JsonResource|array<array-key, mixed>  $data
      * @param  array<string, mixed>  $meta
      */
     public static function item(JsonResource|array $data, int $status = 200, array $meta = []): JsonResponse

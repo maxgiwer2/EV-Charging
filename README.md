@@ -17,6 +17,7 @@
 - `database/erd.md` — Mermaid ERD
 - `architecture/system-architecture.md` — System Architecture
 - `docs/11-development-setup.md` — Development setup และ quality gates
+- `docs/12-improvement-backlog.md` — ช่องโหว่ที่เหลือและแผนปรับปรุง
 - `prompts/CLAUDE_CODE_MASTER_PROMPT.md` — Prompt หลักสำหรับ Claude Code
 - `prompts/AGENTS.md` — Agent roles และ workflow
 
@@ -51,8 +52,8 @@ Laravel 12 / PHP 8.4 / MySQL 8.4 / Redis 7 / nginx — Blade + Tailwind + Alpine
 | M0 Foundation | ✅ Docker stack, Laravel 12, CI, Pint + Larastan + Pest |
 | M1 Core | ✅ Auth/RBAC + policies, 14 tables, vehicles/networks/stations/connectors/sessions, audit trail |
 | M2 Receipts/OCR | ✅ Private storage, magic-byte validation, OCR adapter, duplicate detection, review UI |
-| M3 Analytics | ⬜ ถัดไป |
-| M4 Tariff | ⬜ |
+| M3 Analytics | ✅ Cost engine, session confirm/cancel, dashboard, reports, CSV/XLSX/PDF export |
+| M4 Tariff | ⬜ ถัดไป |
 | M5 AI | ⬜ |
 | M6 Production | ⬜ |
 

@@ -199,3 +199,65 @@ file hash (1.0), shared receipt number (0.9), same station/amount/energy within
 Domain code depends on `OcrProviderInterface` only. `config('ocr.driver')`
 selects the adapter; register new ones in `OcrProviderManager`. The default
 `none` driver extracts nothing and says so, rather than inventing values.
+
+---
+
+## Analytics, Reports and Exports (M3)
+
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/charging-sessions/{id}/confirm` | DRAFT → CONFIRMED; the route out of draft for manual entry |
+| POST | `/charging-sessions/{id}/cancel` | stops counting; keeps the row and audit trail |
+| POST | `/charging-sessions/{id}/reopen` | CANCELLED → DRAFT for correction |
+| GET | `/dashboard/summary` | KPIs + previous-period comparison |
+| GET | `/dashboard/trends` | `granularity=day\|month\|year` |
+| GET | `/dashboard/breakdowns` | `dimension=charging_type\|charging_mode\|station\|network\|vehicle` |
+| GET | `/reports/charging` | row-level, capped at 1000 |
+| GET | `/reports/vehicles`, `/stations`, `/networks` | grouped spend |
+| GET | `/reports/export` | `format=csv\|xlsx\|pdf` |
+
+### Session lifecycle
+
+```
+DRAFT ⇄ CANCELLED
+  ↓
+CONFIRMED → CANCELLED
+```
+
+Only `CONFIRMED` sessions count toward any total (AT-009). Sessions are created
+as `DRAFT`; confirming is a deliberate act separate from editing, because it is
+the point where an entry becomes financial fact. Confirming twice is idempotent.
+Cancelling never deletes — the row and its audit trail survive (docs/10 rule 15).
+
+### Money handling
+
+Money is accepted on a session (someone recording a home charge knows what they
+paid) but the columns are **not fillable**: values are validated, then
+recomposed by `CostCalculationService` using bcmath so the parts always
+reconcile with the total. Supply `unit_price` without `subtotal` and the
+subtotal is derived from energy × rate, rounded once at the end.
+
+### Energy precedence (FR-009)
+
+`RECEIPT` and `CHARGER` outrank `MANUAL`, which outranks `SOC_ESTIMATE`. A
+lower-precedence value is **silently ignored** rather than overwriting a better
+one; equal precedence is allowed through so a corrected reading can replace an
+earlier one. When no energy is supplied and the vehicle has a battery capacity,
+a SOC-derived estimate is used — and when the capacity is unknown, energy stays
+null rather than being guessed.
+
+### Uncomputable metrics are null, never zero
+
+docs/06 forbids calculating a metric whose denominator is zero or null. Those
+fields return `null` in JSON, an empty cell in CSV/XLSX, and an em dash in the
+UI. A `0` would read as a measured value — "free driving" for `cost_per_km` —
+and silently corrupt every average built on it.
+
+### Exports (AT-008)
+
+All formats share `AnalyticsFilter` with the dashboard, so an export contains
+exactly the records the same filter selects. CSV and XLSX stream row by row and
+are unbounded; PDF is capped at 1000 rows and says so in the document. CSV
+carries a UTF-8 BOM so Excel on Windows renders Thai station names correctly.
+Every export writes an `EXPORT` audit entry — it moves financial data out of the
+system.
