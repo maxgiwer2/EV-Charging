@@ -9,12 +9,14 @@ use App\Models\ChargingConnector;
 use App\Models\ChargingNetwork;
 use App\Models\ChargingSession;
 use App\Models\ChargingStation;
+use App\Models\ChargingTariff;
 use App\Models\Receipt;
 use App\Models\Vehicle;
 use App\Policies\ChargingConnectorPolicy;
 use App\Policies\ChargingNetworkPolicy;
 use App\Policies\ChargingSessionPolicy;
 use App\Policies\ChargingStationPolicy;
+use App\Policies\ChargingTariffPolicy;
 use App\Policies\ReceiptPolicy;
 use App\Policies\VehiclePolicy;
 use App\Services\Ocr\OcrProviderManager;
@@ -83,5 +85,6 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ChargingStation::class, ChargingStationPolicy::class);
         Gate::policy(ChargingConnector::class, ChargingConnectorPolicy::class);
         Gate::policy(Receipt::class, ReceiptPolicy::class);
+        Gate::policy(ChargingTariff::class, ChargingTariffPolicy::class);
     }
 }

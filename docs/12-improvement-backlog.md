@@ -56,16 +56,16 @@ silently replace a billed figure.
 
 ## P1 — Functional gaps, M3–M4
 
-### 4. No real OCR provider
+### 4. No real OCR provider — RESOLVED IN M4
 
 Only the `none` adapter exists, so every receipt reaches review with no
 extracted values and must be keyed in by hand. The abstraction is complete
 (`OcrProviderInterface`, `OcrProviderManager`), so adding a real provider is
 self-contained and touches no domain code.
 
-Deferred deliberately: a provider needs credentials and a billing account, and
-the review flow is correct without one. **Owner decision required** on provider
-(Google Document AI, AWS Textract, Typhoon OCR for Thai receipts).
+**Resolved in M4:** Typhoon OCR (opentyphoon.ai), chosen for Thai receipts.
+Set `OCR_DRIVER=typhoon` and `TYPHOON_API_KEY`. The default stays `none`, so a
+checkout without a key still works and makes no network calls.
 
 ### 5. `bySimilarTransaction` rarely fires
 
@@ -75,11 +75,10 @@ hash and receipt-number signals do work. It becomes useful once a library of
 verified receipts exists. Not wrong, just currently near-inert. Revisit with
 real data rather than tuning it blind.
 
-### 6. No web UI for upload, vehicles or sessions
+### 6. No web UI for upload, vehicles or sessions — RESOLVED IN M4
 
-The review UI exists; everything else is API-only. `docs/03` calls for
-mobile-first quick entry (`docs/04` Quick Entry). **M3 added the dashboard; quick-entry and
-upload UI still outstanding.**
+**Resolved in M4:** `/quick-add`, `/receipts/upload` (with camera capture) and
+`/vehicles` now exist alongside the dashboard and review screens.
 
 ### 7. Budgets and notifications are data-only
 
@@ -87,7 +86,7 @@ upload UI still outstanding.**
 thresholds (50/80/100%) and FR-014 alerts have no service behind them.
 Notifications *are* raised for duplicates and review, so the plumbing works.
 **Still outstanding.** The cost engine that produces the spend figures now
-exists, so budget evaluation can build directly on `AnalyticsService` — M4.
+exists, so budget evaluation can build directly on `AnalyticsService` — M5/M6.
 
 ---
 

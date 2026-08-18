@@ -28,6 +28,13 @@
                 <a href="{{ route('receipts.review.index') }}" class="text-slate-600 hover:text-slate-900">
                     Receipts
                 </a>
+                <a href="{{ route('vehicles.manage.index') }}" class="text-slate-600 hover:text-slate-900">
+                    Vehicles
+                </a>
+                <a href="{{ route('sessions.quick-entry') }}"
+                   class="rounded-md bg-slate-900 px-2.5 py-1 text-white hover:bg-slate-700">
+                    + Add
+                </a>
                 <span class="hidden text-slate-400 sm:inline">
                     {{ auth()->user()->name }} ({{ auth()->user()->role->label() }})
                 </span>

@@ -30,6 +30,7 @@ class ChargingSessionService
     public function __construct(
         private readonly CostCalculationService $costs,
         private readonly AuditLogService $audit,
+        private readonly TariffService $tariffs,
     ) {}
 
     /**
@@ -64,6 +65,24 @@ class ChargingSessionService
             $session->energy_source = $resolved['source'];
         }
 
+        // When nothing about the money was supplied, price the session from the
+        // tariff in force at the time (docs/02 FR-007).
+        //
+        // The resolved version id is stored on the session, which is what
+        // makes the total reproducible years later: the version is immutable
+        // once referenced, so the rates that applied stay resolvable (AT-006).
+        //
+        // A supplied amount always wins -- what a driver was actually billed
+        // is the fact, and a tariff is only ever an expectation of it.
+        if ($this->hasNoSuppliedMoney($amounts) && $session->energy_kwh !== null) {
+            $version = $this->tariffs->resolveForSession($session);
+
+            if ($version !== null) {
+                $session->tariff_version_id = $version->id;
+                $amounts = [...$amounts, ...$this->tariffs->priceSession($version, $session->energy_kwh)];
+            }
+        }
+
         // When the user supplied a rate rather than an amount, derive the
         // subtotal from it.
         $amounts['subtotal'] ??= $this->costs->subtotalFromRate(
@@ -83,6 +102,22 @@ class ChargingSessionService
         $this->costs->writeCostLines($session, [...$amounts, 'subtotal' => $totals['subtotal']]);
 
         return $session;
+    }
+
+    /**
+     * Whether the caller stated any money at all.
+     *
+     * @param  array<string, string|null>  $amounts
+     */
+    private function hasNoSuppliedMoney(array $amounts): bool
+    {
+        foreach (['total', 'subtotal', 'unit_price'] as $field) {
+            if (($amounts[$field] ?? null) !== null && $amounts[$field] !== '') {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

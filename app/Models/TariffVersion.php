@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * An immutable priced version of a tariff.
@@ -20,6 +21,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * reproducibility depends on these values staying frozen (AT-006). Corrections
  * publish a new version instead.
  *
+ * @property string $energy_rate
+ * @property string $service_fee
+ * @property string $parking_fee
+ * @property string|null $vat_rate
+ * @property string|null $power_min_kw
+ * @property string|null $power_max_kw
+ * @property Carbon $effective_from
+ * @property Carbon|null $effective_to
  * @property TimeBand $time_band
  */
 class TariffVersion extends Model

@@ -22,6 +22,7 @@ class OcrProviderManager
      */
     private array $drivers = [
         'none' => NoneOcrProvider::class,
+        'typhoon' => TyphoonOcrProvider::class,
     ];
 
     public function __construct(private readonly Container $container) {}

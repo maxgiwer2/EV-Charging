@@ -3,8 +3,11 @@
 declare(strict_types=1);
 
 use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\QuickEntryController;
 use App\Http\Controllers\Web\ReceiptReviewController;
+use App\Http\Controllers\Web\ReceiptUploadController;
 use App\Http\Controllers\Web\SessionController;
+use App\Http\Controllers\Web\VehicleController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -34,6 +37,23 @@ Route::post('logout', [SessionController::class, 'destroy'])
 
 Route::middleware('auth')->group(function (): void {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Quick entry (docs/04): the path a driver uses at the charger.
+    Route::get('quick-add', [QuickEntryController::class, 'create'])->name('sessions.quick-entry');
+    Route::post('quick-add', [QuickEntryController::class, 'store'])->name('sessions.quick-entry.store');
+
+    // Vehicles (docs/02 FR-002).
+    Route::get('vehicles', [VehicleController::class, 'index'])->name('vehicles.manage.index');
+    Route::get('vehicles/create', [VehicleController::class, 'create'])->name('vehicles.manage.create');
+    Route::post('vehicles', [VehicleController::class, 'store'])->name('vehicles.manage.store');
+    Route::get('vehicles/{vehicle}/edit', [VehicleController::class, 'edit'])->name('vehicles.manage.edit');
+    Route::put('vehicles/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.manage.update');
+    Route::delete('vehicles/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.manage.destroy');
+
+    // Receipt upload (docs/04 -> Scan/Upload). Declared before the
+    // {receipt} routes so "upload" is not captured as a receipt id.
+    Route::get('receipts/upload', [ReceiptUploadController::class, 'create'])->name('receipts.upload');
+    Route::post('receipts/upload', [ReceiptUploadController::class, 'store'])->name('receipts.upload.store');
 
     Route::get('receipts', [ReceiptReviewController::class, 'index'])->name('receipts.review.index');
     Route::get('receipts/{receipt}', [ReceiptReviewController::class, 'show'])->name('receipts.review.show');

@@ -53,8 +53,8 @@ Laravel 12 / PHP 8.4 / MySQL 8.4 / Redis 7 / nginx — Blade + Tailwind + Alpine
 | M1 Core | ✅ Auth/RBAC + policies, 14 tables, vehicles/networks/stations/connectors/sessions, audit trail |
 | M2 Receipts/OCR | ✅ Private storage, magic-byte validation, OCR adapter, duplicate detection, review UI |
 | M3 Analytics | ✅ Cost engine, session confirm/cancel, dashboard, reports, CSV/XLSX/PDF export |
-| M4 Tariff | ⬜ ถัดไป |
-| M5 AI | ⬜ |
+| M4 Tariff | ✅ Versioned tariffs + overlap/immutability, TOU, Typhoon OCR, upload/quick-entry/vehicle UI |
+| M5 AI | ⬜ ถัดไป |
 | M6 Production | ⬜ |
 
 ## หลักสำคัญ

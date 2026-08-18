@@ -261,3 +261,96 @@ are unbounded; PDF is capped at 1000 rows and says so in the document. CSV
 carries a UTF-8 BOM so Excel on Windows renders Thai station names correctly.
 Every export writes an `EXPORT` audit entry — it moves financial data out of the
 system.
+
+---
+
+## Tariffs (M4)
+
+| Method | Path | Authorization |
+|---|---|---|
+| GET | `/tariffs`, `/tariffs/{id}` | any authenticated user |
+| POST/PUT/DELETE | `/tariffs`, `/tariffs/{id}` | admin |
+| POST | `/tariffs/{id}/versions` | admin — publish a priced version |
+| PUT | `/tariffs/{id}/versions/{version}` | admin — amend an **unused** version |
+
+A tariff is the stable identity of a pricing scheme; every rate lives in a
+version with an effective period. Reads are open because a user is entitled to
+see the rate they were charged.
+
+### Versions are immutable once used (AT-006)
+
+Amending a version that has priced a charging session returns `CONFLICT` (409).
+At that point the version is evidence, not configuration — editing its rates
+would silently rewrite historical totals. A rate change publishes a new version.
+`is_locked` on the version resource tells a client which state it is in. The
+check counts soft-deleted sessions too: a deleted financial record still has to
+stay explainable.
+
+### Overlap validation
+
+Publishing a version whose period overlaps an existing one of the **same time
+band** returns `TARIFF_OVERLAP` (409). MySQL cannot express a non-overlap
+constraint over a date range, so `TariffService` enforces it under a row lock —
+two admins publishing simultaneously would otherwise both pass the check.
+
+Peak and off-peak versions may share dates: they cover the same days but
+different hours. Publishing an open-ended version automatically closes the
+previous open-ended one of that band at the new start date, so the timeline has
+no gap and no instant covered twice.
+
+### Resolution and pricing
+
+When a session is saved with **no money supplied**, the tariff in force is
+resolved and applied, and `tariff_version_id` is stored — that snapshot is what
+makes the total reproducible years later. Resolution narrows by scope
+(station-specific beats network-wide), then power band (upper bound exclusive,
+so `0–50` and `50–` do not both match at 50 kW), then time band.
+
+A supplied amount always wins: what a driver was actually billed is the fact,
+and a tariff is only an expectation of it. When no tariff matches, the session
+is left unpriced rather than being given someone else's rate.
+
+`vat_rate` is nullable and means "this tariff does not state a VAT rate", which
+is **not** the same as 0% — no tax is added that was never charged.
+
+### Time-of-use windows
+
+Peak hours are configuration (`config/tariffs.php`), not constants in code
+(docs/10 rule 9), and are expressed in the display timezone because a TOU window
+is defined in local time.
+
+---
+
+## OCR provider: Typhoon (M4)
+
+`OCR_DRIVER=typhoon` plus `TYPHOON_API_KEY` enables real extraction via
+opentyphoon.ai — a Thai-first document VLM, chosen because Thai charging
+receipts mix Thai and English labels that general OCR engines mangle. The API is
+OpenAI-compatible (`POST {base_url}/chat/completions`, Bearer token).
+
+The model returns layout-aware **Markdown**, not structured fields, so
+`TyphoonOcrProvider` obtains the text and `ReceiptParserService` recovers the
+docs/05 fields deterministically. Asking the model for JSON directly would be
+shorter but would let it produce a plausible total for an unreadable line, which
+docs/05 forbids.
+
+Confidence reflects *how* a value was found — an explicitly labelled amount
+scores higher than one recovered by arithmetic — and never reaches 1.0, because
+a value read out of OCR text is always an inference. Receipts are sent as base64
+data URIs, never as fetchable URLs. PDF receipts are rasterised with `pdftoppm`
+before sending, since the model accepts images only.
+
+## Web UI (M4)
+
+| Path | Purpose |
+|---|---|
+| `/dashboard` | KPIs, trends, breakdowns, exports |
+| `/quick-add` | docs/04 Quick Entry — confirms immediately |
+| `/receipts/upload` | docs/04 Scan/Upload, camera capture on mobile |
+| `/receipts`, `/receipts/{id}` | review queue and confirmation |
+| `/vehicles` | FR-002 vehicle management |
+
+Quick entry confirms in one step: unlike a receipt there is no second source to
+reconcile against, so leaving it in `DRAFT` would just hide the charge from the
+dashboard. The web routes reuse the API form requests, so a validation rule
+cannot be enforced on one path but not the other.

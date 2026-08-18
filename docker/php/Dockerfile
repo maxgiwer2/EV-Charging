@@ -5,9 +5,13 @@ FROM php:8.4-fpm-alpine
 # - oniguruma-dev  : mbstring
 # - libzip-dev     : zip (XLSX export)
 # - freetype/jpeg/png : gd (receipt image preprocessing before OCR)
+# - poppler-utils  : pdftoppm, rasterises PDF receipts before OCR. The OCR
+#                    model accepts images only, so without this every PDF
+#                    receipt would silently fail.
 RUN apk add --no-cache \
         bash \
         git \
+        poppler-utils \
         icu-dev \
         libzip-dev \
         oniguruma-dev \

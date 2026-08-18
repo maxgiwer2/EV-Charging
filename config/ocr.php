@@ -28,6 +28,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Typhoon OCR (SCB 10X, opentyphoon.ai)
+    |--------------------------------------------------------------------------
+    |
+    | A Thai-first document VLM, chosen because Thai charging receipts mix Thai
+    | and English labels that general OCR engines mangle. The API is
+    | OpenAI-compatible: POST {base_url}/chat/completions with a Bearer token.
+    |
+    | `typhoon-ocr` is v1.5 and the recommended endpoint; `typhoon-ocr-preview`
+    | is the legacy v1 model. The key is read from the environment and never
+    | committed (docs/03 -> no secrets in repository).
+    |
+    */
+
+    'typhoon' => [
+        'base_url' => env('TYPHOON_BASE_URL', 'https://api.opentyphoon.ai/v1'),
+        'api_key' => env('TYPHOON_API_KEY', ''),
+        'model' => env('TYPHOON_MODEL', 'typhoon-ocr'),
+        // A receipt transcription is short; this bounds a runaway response.
+        'max_tokens' => (int) env('TYPHOON_MAX_TOKENS', 2048),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Review Threshold
     |--------------------------------------------------------------------------
     |

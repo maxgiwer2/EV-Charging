@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\ChargingStationController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\ReceiptController;
 use App\Http\Controllers\Api\V1\ReportController;
+use App\Http\Controllers\Api\V1\TariffController;
 use App\Http\Controllers\Api\V1\VehicleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -89,6 +90,18 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('receipts/{receipt}/ocr', [ReceiptController::class, 'ocr'])->name('receipts.ocr');
     Route::post('receipts/{receipt}/verify', [ReceiptController::class, 'verify'])->name('receipts.verify');
     Route::post('receipts/{receipt}/reject', [ReceiptController::class, 'reject'])->name('receipts.reject');
+
+    /*
+     * Tariffs (docs/07 -> Tariffs, docs/04 -> Admin Tariff).
+     *
+     * Versions are append-only in practice: one that has priced a session can
+     * no longer be edited (AT-006), so a rate change publishes a new version.
+     */
+    Route::apiResource('tariffs', TariffController::class);
+    Route::post('tariffs/{tariff}/versions', [TariffController::class, 'storeVersion'])
+        ->name('tariffs.versions.store');
+    Route::put('tariffs/{tariff}/versions/{version}', [TariffController::class, 'updateVersion'])
+        ->name('tariffs.versions.update');
 
     // Shared reference data: readable by all, writable by admins only.
     Route::apiResource('networks', ChargingNetworkController::class)
