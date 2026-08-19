@@ -84,6 +84,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Release Version
+    |--------------------------------------------------------------------------
+    |
+    | Reported by /health/ready. During an incident the first question is which
+    | release is answering, and guessing from a deploy log is slower than
+    | reading it off the endpoint. Set from CI (a git sha is ideal).
+    |
+    */
+
+    'version' => env('APP_VERSION', 'dev'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Locale Configuration
     |--------------------------------------------------------------------------
     |

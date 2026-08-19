@@ -5,6 +5,11 @@ services:
     build:
       context: .
       dockerfile: docker/php/Dockerfile
+      args:
+        # Match the host user on Linux so bind-mount writes stay editable.
+        # Defaults are fine on Docker Desktop (macOS/Windows).
+        APP_UID: ${APP_UID:-1000}
+        APP_GID: ${APP_GID:-1000}
     volumes:
       - .:/var/www/html
     depends_on:

@@ -19,6 +19,7 @@
 - `docs/11-development-setup.md` — Development setup และ quality gates
 - `docs/12-improvement-backlog.md` — ช่องโหว่ที่เหลือและแผนปรับปรุง
 - `docs/13-ai-assistant.md` — AI assistant, anomaly detection, forecasting
+- `docs/14-deployment.md` — Deployment, hardening, backup/restore, observability
 - `prompts/CLAUDE_CODE_MASTER_PROMPT.md` — Prompt หลักสำหรับ Claude Code
 - `prompts/AGENTS.md` — Agent roles และ workflow
 
@@ -57,7 +58,7 @@ Laravel 12 / PHP 8.4 / MySQL 8.4 / Redis 7 / nginx — Blade + Tailwind + Alpine
 | M4 Tariff | ✅ Versioned tariffs + overlap/immutability, TOU, Typhoon OCR, upload/quick-entry/vehicle UI |
 | M5 AI | ✅ AI assistant (Ollama, advisory), anomaly detection, forecasting |
 | Backlog | ✅ FR-013 budgets + insights UI (dashboard: budget, forecast, anomalies) |
-| M6 Production | ⬜ ถัดไป |
+| M6 Production | ✅ Security headers, prod guards, health probes, backup/restore, deployment guide |
 
 ## หลักสำคัญ
 1. Receipt Original Value ห้ามถูกเขียนทับด้วยค่าที่คำนวณ

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Enums\ErrorCode;
 use App\Http\ApiResponse;
+use App\Http\Middleware\AssignRequestId;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Application;
@@ -28,6 +30,24 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(prepend: [
             ThrottleRequests::using('api'),
         ]);
+
+        // Security headers on every response, web and API alike
+        // (docs/03 -> secure by default).
+        $middleware->append(SecurityHeaders::class);
+
+        // Prepended so the id exists before anything else can log
+        // (docs/03 -> structured logging).
+        $middleware->prepend(AssignRequestId::class);
+
+        // Trust the reverse proxy for scheme and client IP. Without this
+        // Laravel behind nginx sees plain HTTP and generates http:// URLs, and
+        // every audit row records the proxy's address instead of the user's.
+        // Restricted to a configured proxy list in production, because trusting
+        // any X-Forwarded-For lets a client spoof the IP written to the audit
+        // trail (docs/02 FR-015).
+        $middleware->trustProxies(
+            at: env('TRUSTED_PROXIES') === '*' ? '*' : array_filter(explode(',', (string) env('TRUSTED_PROXIES', ''))),
+        );
 
         // The sign-in route is named `web.login`, not Laravel's default
         // `login`, so the guest redirect has to be pointed at it explicitly.

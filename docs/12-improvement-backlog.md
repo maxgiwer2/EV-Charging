@@ -98,16 +98,16 @@ timezone, never converted.
 
 ---
 
-## P2 — Hardening, M6
+## P2 — Hardening — ADDRESSED IN M6
 
 | # | Gap | Note |
 |---|---|---|
-| 8 | Larastan at level 6 | Raise toward 8 once the domain layer settles |
+| 8 | Larastan at level 6 | **Evaluated in M6 and deliberately kept.** All 77 (level 7) and 141 (level 8) findings were inspected; none was a latent bug. See the rationale in `phpstan.neon` |
 | 9 | `tests/` excluded from static analysis | Pest rebinds `$this` in closures; revisit if a maintained extension appears |
-| 10 | Blade templates unanalysed | Consider `blade-formatter` / a Blade-aware linter |
-| 11 | `SESSION_SECURE_COOKIE=false` | Must be `true` in production; needs the deployment guide |
-| 12 | No backup/restore procedure | `docs/03` reliability requirement |
-| 13 | Docker uid hardcoded to 1000 | Breaks bind-mount writes on Linux hosts with a different uid |
+| 10 | Blade templates unanalysed | Still open. Feature tests cover the rendered output, which is the behaviour that matters |
+| 11 | `SESSION_SECURE_COOKIE=false` | **Resolved.** The app refuses to boot in production without it, and `app:check-production` runs in CI |
+| 12 | No backup/restore procedure | **Resolved.** `backup:run` / `backup:verify`, scheduled nightly, restore rehearsed and documented in `docs/14` |
+| 13 | Docker uid hardcoded to 1000 | **Resolved.** `APP_UID`/`APP_GID` build args |
 | 14 | `notifications` table name | Collides with Laravel's database notification channel if that is ever adopted |
 | 15 | `duplicate_matches` is a point-in-time snapshot | Deliberate — shows what was flagged at the time — but can look stale next to newer uploads |
 

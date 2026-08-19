@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\Web\BudgetController;
 use App\Http\Controllers\Web\DashboardController;
 use App\Http\Controllers\Web\QuickEntryController;
@@ -73,3 +74,19 @@ Route::middleware('auth')->group(function (): void {
     Route::post('receipts/{receipt}/verify', [ReceiptReviewController::class, 'verify'])->name('receipts.review.verify');
     Route::post('receipts/{receipt}/reject', [ReceiptReviewController::class, 'reject'])->name('receipts.review.reject');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Health
+|--------------------------------------------------------------------------
+|
+| Unauthenticated on purpose: a load balancer cannot log in. Neither endpoint
+| discloses anything beyond up/down per dependency -- no messages, hostnames or
+| credentials (docs/10 rule 13).
+|
+| `/up` is Laravel's own liveness route, kept for compatibility.
+|
+*/
+
+Route::get('health/live', [HealthController::class, 'live'])->name('health.live');
+Route::get('health/ready', [HealthController::class, 'ready'])->name('health.ready');

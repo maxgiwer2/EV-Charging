@@ -88,6 +88,19 @@ jobs:
       - name: Static analysis (Larastan)
         run: vendor/bin/phpstan analyse --no-progress --memory-limit=1G
 
+      # Catches an unsafe default reaching main: the same checks that
+      # ProductionServiceProvider enforces at boot (docs/14-deployment.md).
+      # Run with production-shaped config rather than the CI .env.
+      - name: Production configuration check
+        env:
+          APP_DEBUG: "false"
+          APP_URL: https://ci.example.com
+          SESSION_SECURE_COOKIE: "true"
+          SESSION_ENCRYPT: "true"
+          QUEUE_CONNECTION: redis
+          DB_CONNECTION: mysql
+        run: php artisan app:check-production
+
       - name: Tests (Pest)
         env:
           DB_HOST: 127.0.0.1

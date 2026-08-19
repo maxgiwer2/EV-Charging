@@ -8,6 +8,13 @@ FROM php:8.4-fpm-alpine
 # - poppler-utils  : pdftoppm, rasterises PDF receipts before OCR. The OCR
 #                    model accepts images only, so without this every PDF
 #                    receipt would silently fail.
+#
+# No MySQL client is installed, deliberately. Alpine ships MariaDB's client,
+# which cannot authenticate against MySQL 8 (no caching_sha2_password plugin) --
+# every dump it produced was empty. backup:run therefore dumps through PDO, and
+# the documented restore runs the client inside the mysql container instead
+# (docs/14-deployment.md). Leaving a broken client installed would suggest it
+# works.
 RUN apk add --no-cache \
         bash \
         git \
@@ -41,5 +48,14 @@ WORKDIR /var/www/html
 
 # Run as a non-root user so files written into the bind mount stay editable
 # on the host and the container has no unnecessary privileges.
-RUN addgroup -g 1000 app && adduser -u 1000 -G app -s /bin/sh -D app
+#
+# The uid/gid are build arguments rather than hardcoded: on a Linux host the
+# container user must match the host user that owns the bind mount, and that is
+# not always 1000. Build with:
+#   docker compose build --build-arg APP_UID=$(id -u) --build-arg APP_GID=$(id -g)
+ARG APP_UID=1000
+ARG APP_GID=1000
+
+RUN addgroup -g ${APP_GID} app \
+    && adduser -u ${APP_UID} -G app -s /bin/sh -D app
 USER app

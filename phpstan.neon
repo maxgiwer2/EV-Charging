@@ -7,10 +7,21 @@ parameters:
         - database
         - routes
 
-    # Level 6 is the practical entry point for a fresh Laravel codebase and
-    # already catches the classes of bug that matter here: wrong argument
-    # types in cost calculations and missing return types on services.
-    # Raise toward 8 as the domain layer stabilises (target: M6).
+    # Level 6 catches the classes of bug that matter here: wrong argument types
+    # in cost calculations and missing return types on services.
+    #
+    # Levels 7 and 8 were evaluated in M6 and deliberately not adopted yet.
+    # Every one of the 77 (level 7) and 141 (level 8) findings was inspected and
+    # none was a latent bug -- they are annotation obligations of two kinds:
+    #
+    #   * ~60 bcmath calls wanting `numeric-string` rather than `string`, which
+    #     needs `@param numeric-string` threaded through Money and Statistics
+    #     plus assertions at the boundaries;
+    #   * `int<0, max>` vs `int` on unsigned columns, and `$request->user()`
+    #     being nullable behind auth middleware.
+    #
+    # Both are worth doing and neither is urgent. Churning money-handling code
+    # for a lint level, with no bug to show for it, is the riskier option.
     level: 6
 
     # `tests` is deliberately not analysed.
