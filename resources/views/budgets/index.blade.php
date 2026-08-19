@@ -12,7 +12,10 @@
             </p>
         </div>
         <a href="{{ route('budgets.manage.create') }}"
-           class="whitespace-nowrap rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700">
+           class="inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap rounded-md bg-slate-900 px-3 text-sm font-medium text-white active:bg-slate-700">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" d="M12 5v14M5 12h14" />
+            </svg>
             Add budget
         </a>
     </div>
@@ -48,14 +51,15 @@
                             </p>
                         </div>
 
-                        <div class="flex items-center gap-3 text-sm">
+                        <div class="flex shrink-0 items-center gap-2 text-sm">
                             <a href="{{ route('budgets.manage.edit', $budget) }}"
-                               class="font-medium text-slate-900 hover:underline">Edit</a>
+                               class="inline-flex min-h-11 items-center rounded-md border border-slate-300 px-3 font-medium active:bg-slate-50">Edit</a>
                             <form method="POST" action="{{ route('budgets.manage.destroy', $budget) }}"
                                   onsubmit="return confirm('Remove this budget?')">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="text-rose-700 hover:underline">Remove</button>
+                                <button type="submit"
+                                        class="inline-flex min-h-11 items-center rounded-md border border-rose-300 px-3 font-medium text-rose-700 active:bg-rose-50">Remove</button>
                             </form>
                         </div>
                     </div>

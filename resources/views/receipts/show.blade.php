@@ -23,7 +23,8 @@
                 &middot; <x-receipt-status :status="$receipt->status" />
             </p>
         </div>
-        <a href="{{ route('receipts.review.index') }}" class="text-sm text-slate-600 hover:underline">Back</a>
+        <a href="{{ route('receipts.review.index') }}"
+           class="inline-flex min-h-11 items-center px-2 text-sm text-slate-600 hover:underline">Back</a>
     </div>
 
     @if (! empty($receipt->duplicate_matches))

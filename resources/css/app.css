@@ -9,3 +9,38 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Alpine sets x-cloak until it initialises. Without this rule the account
+   menu and other toggled panels flash open on every page load. */
+[x-cloak] {
+    display: none !important;
+}
+
+/* Form controls are sized for a thumb, not a mouse pointer.
+
+   Two problems this solves, both measured on a 375px viewport:
+
+   - Controls rendered 23px tall. WCAG 2.5.5 and Apple's HIG both put the
+     minimum tap target at ~44px, and below that a miss is common enough to be
+     irritating on a form people fill in standing at a charger.
+   - iOS Safari zooms the whole page whenever a focused field's font is under
+     16px, so every tap on a field made the layout jump.
+
+   Done here rather than per template so no form can be added later that misses
+   it. Checkboxes and radios keep their intrinsic size; stretching them looks
+   broken, and their labels carry the tap area instead. */
+@media (max-width: 767px) {
+    input:not([type='checkbox']):not([type='radio']),
+    select,
+    textarea,
+    button {
+        font-size: 16px;
+        min-height: 2.75rem;
+    }
+
+    input:not([type='checkbox']):not([type='radio']),
+    select {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+    }
+}

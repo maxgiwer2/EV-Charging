@@ -20,6 +20,7 @@
 - `docs/12-improvement-backlog.md` — ช่องโหว่ที่เหลือและแผนปรับปรุง
 - `docs/13-ai-assistant.md` — AI assistant, anomaly detection, forecasting
 - `docs/14-deployment.md` — Deployment, hardening, backup/restore, observability
+- `docs/15-ui.md` — UI/UX และการรองรับมือถือ
 - `prompts/CLAUDE_CODE_MASTER_PROMPT.md` — Prompt หลักสำหรับ Claude Code
 - `prompts/AGENTS.md` — Agent roles และ workflow
 

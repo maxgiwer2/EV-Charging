@@ -118,7 +118,8 @@
                         class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">
                     {{ $editing ? 'Save changes' : 'Add vehicle' }}
                 </button>
-                <a href="{{ route('vehicles.manage.index') }}" class="text-sm text-slate-600 hover:underline">Cancel</a>
+                <a href="{{ route('vehicles.manage.index') }}"
+                   class="inline-flex min-h-11 items-center px-2 text-sm text-slate-600 hover:underline">Cancel</a>
             </div>
         </form>
     </div>

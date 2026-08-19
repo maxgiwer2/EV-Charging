@@ -133,7 +133,12 @@
                 </div>
 
                 <details class="text-sm">
-                    <summary class="cursor-pointer text-slate-600">Odometer (optional)</summary>
+                    <summary class="flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-slate-600">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                            <path stroke-linecap="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                        Odometer (optional)
+                    </summary>
                     <p class="mt-2 text-xs text-slate-500">
                         Recording distance is what makes cost/km and efficiency available &mdash;
                         without it those metrics stay blank rather than showing zero.
@@ -159,7 +164,8 @@
                             class="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700">
                         Save charge
                     </button>
-                    <a href="{{ route('receipts.upload') }}" class="text-sm text-slate-600 hover:underline">
+                    <a href="{{ route('receipts.upload') }}"
+                       class="inline-flex min-h-11 items-center px-2 text-sm text-slate-600 hover:underline">
                         Have a receipt instead?
                     </a>
                 </div>

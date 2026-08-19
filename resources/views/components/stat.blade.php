@@ -13,10 +13,10 @@
     misreport an unknown as a measured fact.
 --}}
 
-<div class="rounded-md border border-slate-200 bg-white p-4">
+<div class="rounded-lg border border-slate-200 bg-white p-3 sm:p-4">
     <p class="text-xs uppercase tracking-wide text-slate-500">{{ $label }}</p>
 
-    <p class="mt-1 text-xl font-semibold tabular-nums">
+    <p class="mt-1 text-lg font-semibold tabular-nums sm:text-xl">
         @if ($value === null || $value === '')
             <span class="text-slate-300" title="Not enough data to calculate">&mdash;</span>
         @else
